@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I love Bitocin and Crypto</title>
+    <script>
+        function toggleMessage() {
+            const messageElement = document.getElementById('message');
+            if (messageElement.textContent === 'I love Bitcoin!') {
+                messageElement.textContent = 'I love Crypto!';
+            } else {
+                messageElement.textContent = 'I love Bitcoin!';
+            }
+        }
+    </script>
+</head>
+<body>
+    <center><br><br>
+    <h1 id="message">I love Bitcoin!</h1>
+    <button onclick="toggleMessage()">Toggle Message</button>
+    </center>
+</body>
+</html>
