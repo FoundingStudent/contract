@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Token Minting Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        input, button {
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="./mintABI.js"></script>
+</head>
+<body  onload="checkWallet()">
+
+    <h1>My Token Minting Page</h1>
+    <label for="tokenAmount">How many tokens to mint?</label><br>
+    <input type="number" id="tokenAmount" name="tokenAmount" min="1">
+    <button onclick="mintTokens()">Mint</button>
+
+    <!----->
+    <section id="walletInfo">
+        <br><br>
+        <b>Wallet connection: </b><br>
+        <span id="walletStatus" style="color:red">Checking for a wallet connection...</span>
+        <button onclick="checkWallet()" id="walletButton">Connect wallet</button>    
+      </section>
+      <!----->
+
+      <h3><span id="responseMessage" style="color:blue"></span></h3>
+
+    <script>
+        // These vars will be used in multiple functions.
+        var myWallet; 
+        var myContract; 
+
+        async function checkWallet() {
+            
+            // Get wallet addr
+            var accountList = await ethereum.request({ method: 'eth_accounts' });
+            myWallet = accountList[0] ;
+      
+            // If not connected to wallet, open wallet to connect
+            if (!myWallet) {
+                await window.ethereum.request({
+                    method: "eth_requestAccounts", // This checks wallet connection
+                params: [
+                {
+                    eth_accounts: {}
+                }
+                ]
+                });
+
+                // Reload wallet address
+                accountList = await ethereum.request({ method: 'eth_accounts' });
+                myWallet = accountList[0] ;
+            };
+
+            
+            // Test again: If not connected to wallet, show a button to allow wallet connection.
+            if (!myWallet) {
+                document.getElementById('walletStatus').innerHTML = "Click here to connect a crypto wallet: " ;
+                document.getElementById('walletButton').hidden = false ;
+            } else {
+                document.getElementById('walletStatus').innerHTML = " &#x2713; Your crypto wallet is connected. <br>" ;
+                document.getElementById('walletStatus').style.color = "#0000FF" ;
+                document.getElementById("walletButton").hidden = true ;
+            };
+            
+
+            contractConnect() ;   
+        } ;
+
+        async function contractConnect() {
+            var web3;
+            if (window.ethereum) {
+                web3 = new Web3(window.ethereum);
+            } ;
+            myContract = new web3.eth.Contract(mintABI, mintContractAddress, {chainId: 137}) ;  // Polygon mainnet
+        }
+
+        async function mintTokens() {
+
+            var mintAmount = document.getElementById('tokenAmount').value;
+            if (mintAmount <= 0) {
+                alert('Please enter a valid number greater than zero.');
+                return;
+            }
+            mintWholeNumber = mintAmount * 10**18;
+
+            myContract.methods.mintFunction(mintWholeNumber).send({from: myWallet}) 
+            .then((result) => {
+              console.log(result)
+              document.getElementById('responseMessage').innerHTML = "Tokens minted." ;
+            })
+            .catch((error) => {
+            console.log(error, error.code);
+            document.getElementById('responseMessage').innerHTML = "Error: "+error+".";
+          });
+        }
+
+    </script>
+
+</body>
+</html>
