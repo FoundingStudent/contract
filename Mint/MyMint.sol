@@ -15,8 +15,13 @@ contract MyMint is ERC20 {
     }
     
     function mintFunction(uint256 amountToMint) public {
+
+        // Amount is submitted as a whole number, but _mint() function is in decimals. 
+        uint256 amountInDecmials = amountToMint*10**tokenDecimals;
+
         // check that current supply plus new mint amount < token supply 
         uint256 currentSupply = totalSupply(); // Gets the current supply of this token.
+        
         // If the new mint would exceed maxTokenSupply, the return an error message.
         require(currentSupply + amountToMint <= maxTokenSupply, 
             "Minting the amount requested would exceed the max sypply allowed.") ;
@@ -24,6 +29,6 @@ contract MyMint is ERC20 {
         /* You could add more requirements here like a restricting who can mint tokens
             or the amount they are allowed to mint. */
 
-        _mint(msg.sender, amountToMint);
+        _mint(msg.sender, amountInDecmials);
     }
 }
