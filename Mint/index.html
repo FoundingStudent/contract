@@ -17,7 +17,8 @@
     </style>
     <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-    <script type="text/javascript" src="./mintABI.js"></script>
+    <script src="./mintABI.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.5.0/ethers.umd.min.js" type="application/javascript"></script>
 </head>
 <body  onload="checkWallet()">
 
@@ -41,6 +42,8 @@
         // These vars will be used in multiple functions.
         var myWallet; 
         var myContract; 
+        var provider;
+        var signer;
 
         async function checkWallet() {
             
@@ -64,7 +67,6 @@
                 myWallet = accountList[0] ;
             };
 
-            
             // Test again: If not connected to wallet, show a button to allow wallet connection.
             if (!myWallet) {
                 document.getElementById('walletStatus').innerHTML = "Click here to connect a crypto wallet: " ;
@@ -75,16 +77,19 @@
                 document.getElementById("walletButton").hidden = true ;
             };
             
-
             contractConnect() ;   
         } ;
 
         async function contractConnect() {
-            var web3;
-            if (window.ethereum) {
-                web3 = new Web3(window.ethereum);
-            } ;
-            myContract = new web3.eth.Contract(mintABI, mintContractAddress, {chainId: 137}) ;  // Polygon mainnet
+            
+            await window.ethereum.request({ method: 'eth_requestAccounts' });
+            provider = new ethers.providers.Web3Provider(window.ethereum);
+            myContract = new ethers.Contract(mintContractAddress, mintABI, provider);
+            signer = provider.getSigner();
+
+            // Test the connection by calling data from the contract
+            var supply = await myContract.totalSupply();
+            console.log("supply="+supply+" tokenAddr:"+mintContractAddress); 
         }
 
         async function mintTokens() {
@@ -94,17 +99,17 @@
                 alert('Please enter a valid number greater than zero.');
                 return;
             }
-            mintWholeNumber = mintAmount * 10**18;
 
-            myContract.methods.mintFunction(mintWholeNumber).send({from: myWallet}) 
-            .then((result) => {
-              console.log(result)
-              document.getElementById('responseMessage').innerHTML = "Tokens minted." ;
-            })
-            .catch((error) => {
-            console.log(error, error.code);
-            document.getElementById('responseMessage').innerHTML = "Error: "+error+".";
-          });
+            try {
+                const contractWithSigner = myContract.connect(signer);
+                const tx = await contractWithSigner.mintFunction(mintAmount);
+                const receipt = await tx.wait();
+                console.log(`Transaction successful with hash: ${receipt.transactionHash}`);
+                document.getElementById('responseMessage').innerHTML = "Tokens minted." ;
+            } catch (error) {
+                console.error("Error calling mintFunction:", error);
+                document.getElementById('responseMessage').innerHTML = `Error: ${error.message}`;
+            }
         }
 
     </script>
