@@ -4,8 +4,8 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract MyMint is ERC20 {
 
-    string tokenName= "My minting smart contract."; // You set the name.
-    string tokenSymbol= "MINT"; // You set the symbol.
+    string tokenName= "University of Austin Coin"; // You set the name.
+    string tokenSymbol= "UATC"; // You set the symbol.
     uint256 tokenDecimals= 18; // Most tokens use 18 decimal places.
     uint256 maxTokenSupply= 1000000*(10**tokenDecimals); // You set the max supply.
 
