@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Escrow Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        input, button {
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="./escrowABI.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.5.0/ethers.umd.min.js" type="application/javascript"></script>
+</head>
+<body  onload="checkWallet()">
+
+    <h1>My Escrow Page</h1>
+    <hr>
+    
+    <!----->
+    <section id="walletInfo">
+        <br><br>
+        <b>Wallet connection: </b><br>
+        <span id="walletStatus" style="color:red">Checking for a wallet connection...</span>
+        <button onclick="checkWallet()" id="walletButton">Connect wallet</button>    
+      </section>
+      <!----->
+
+      <h3>Status: <span id="responseMessage" style="color:blue"></span></h3>
+
+    <hr>
+    <div class="section" id="sectionClose">
+        <h2>Open escrow</h2>
+        Before you open an escrow account, you must approve the funds transfer from your wallet.<br>
+        <label for="amount">Amount</label>
+        <input type="number" id="amount" name="amount" min="1"><br>
+        <button id="approveButton" onclick="approveButton()">Approve Token Transfer</button><br>
+
+        <label for="sellerAddress">Seller address</label>
+        <input type="text" id="sellerAddress" name="sellerAddress"><br>
+        <label for="mediatorAddress">Mediator address</label>
+        <input type="text" id="mediatorAddress" name="mediatorAddress"><br>
+        <button id="openButton"  onclick="openEscrow()" diabled>Open escrow</button>
+    </div>
+    <hr>
+    <div class="section" id="sectionClose">
+        <h2>Close escrow</h2>
+        <label for="closeOption">Close escrow option</label>
+        <select id="closeOption" name="closeOption" required>
+            <option value="paySeller">Pay seller</option>
+            <option value="returnFunds">Return funds</option>
+        </select><br>
+        <button id="closeButton" onclick="closeEscrow()">Close escrow</button>
+    </div>
+
+
+    <script>
+        // These vars will be used in multiple functions.
+        var myWallet; 
+        var myContract; 
+        var provider;
+        var signer;
+
+        async function checkWallet() {
+            
+            // Get wallet addr
+            var accountList = await ethereum.request({ method: 'eth_accounts' });
+            myWallet = accountList[0] ;
+      
+            // If not connected to wallet, open wallet to connect
+            if (!myWallet) {
+                await window.ethereum.request({
+                    method: "eth_requestAccounts", // This checks wallet connection
+                params: [
+                {
+                    eth_accounts: {}
+                }
+                ]
+                });
+
+                // Reload wallet address
+                accountList = await ethereum.request({ method: 'eth_accounts' });
+                myWallet = accountList[0] ;
+            };
+
+            
+            // Test again: If not connected to wallet, show a button to allow wallet connection.
+            if (!myWallet) {
+                document.getElementById('walletStatus').innerHTML = "Click here to connect a crypto wallet: " ;
+                document.getElementById('walletButton').hidden = false ;
+            } else {
+                document.getElementById('walletStatus').innerHTML = " &#x2713; Your crypto wallet is connected. <br>" ;
+                document.getElementById('walletStatus').style.color = "#0000FF" ;
+                document.getElementById("walletButton").hidden = true ;
+            };
+
+            console.log("token: "+escrowTokenAddress);
+            contractConnect() ;   
+        } ;
+
+        async function contractConnect() {
+            await window.ethereum.request({ method: 'eth_requestAccounts' });
+            provider = new ethers.providers.Web3Provider(window.ethereum);
+            myContract = new ethers.Contract(escrowContractAddress, escrowABI, provider);
+            signer = provider.getSigner();
+
+            // Test the connection by calling data from the contract
+            var buyer = await myContract.buyerAddress();
+            console.log("buyer="+buyer);
+            if (buyer=="0x0000000000000000000000000000000000000000") {
+                document.getElementById('responseMessage').innerHTML = "No funds in escrow." ;
+                document.getElementById('responseMessage').style.color = "blue" ;
+                document.getElementById('openButton').disabled = true; 
+                document.getElementById('closeButton').disabled = true; 
+                document.getElementById('sellerAddress').disabled = true; 
+                document.getElementById('mediatorAddress').disabled = true; 
+            }
+        }
+
+        async function approveButton(){
+            console.log("approveButton() called.") ;
+            let getAmt = document.getElementById('amount').value ;
+            document.getElementById('amount').disabled = true; 
+            document.getElementById('responseMessage').innerHTML = "<b>Approval in progress...</b>" ;
+            document.getElementById('responseMessage').style.color = "red" ;
+
+            approveAmt = BigInt(getAmt*10**18) ; 
+            console.log(getAmt + " -- " + approveAmt) ;
+
+            var tokenContract  = new ethers.Contract(escrowTokenAddress, escrowTokenABI, signer);
+            try {
+                const tx = await tokenContract.approve(escrowContractAddress, approveAmt); 
+                const receipt = await tx.wait();
+                document.getElementById('responseMessage').innerHTML = "Funds transer approved." ;
+                document.getElementById('responseMessage').style.color = "blue" ;
+                document.getElementById('sellerAddress').disabled = false; 
+                document.getElementById('mediatorAddress').disabled = false; 
+                document.getElementById('openButton').disabled = false; 
+                document.getElementById('approveButton').disabled = true; 
+                document.getElementById('closeButton').disabled = true; 
+            } catch (error) {
+                console.error("Error approving token transfer:", error);
+                document.getElementById('responseMessage').innerText = `Error: ${error.message}`;
+            }
+    
+        } ;
+
+
+        async function openEscrow() {
+            document.getElementById('responseMessage').innerHTML = "Open account request sent." ;
+            document.getElementById('responseMessage').style.color = "red" ;
+            
+            const amount = document.getElementById('amount').value;
+            const sellerAddress = document.getElementById('sellerAddress').value;
+            const mediatorAddress = document.getElementById('mediatorAddress').value;
+            if (amount <= 0 || !sellerAddress || !mediatorAddress) {
+                alert('Please enter valid details for all fields.');
+                return;
+            }
+            var wholeNumAmount = BigInt(amount*10**18);
+            console.log(`Opening escrow with amount: ${wholeNumAmount}, Seller Address: ${sellerAddress}, Mediator Address: ${mediatorAddress}`);
+            
+            try {
+                const contractWithSigner = myContract.connect(signer);
+                const tx = await contractWithSigner.openEscrow(wholeNumAmount, sellerAddress, mediatorAddress);
+                const receipt = await tx.wait();
+                console.log(`Transaction successful with hash: ${receipt.transactionHash}`);
+                document.getElementById('responseMessage').innerHTML = "Escrow account opened." ;
+                document.getElementById('responseMessage').style.color = "blue" ;
+                document.getElementById('closeButton').disabled = false; 
+                document.getElementById('sellerAddress').disabled = true; 
+                document.getElementById('mediatorAddress').disabled = true; 
+                document.getElementById('openButton').disabled = true; 
+                document.getElementById('approveButton').disabled = true; 
+            } catch (error) {
+                console.error("Error calling escrowOpen():", error);
+                document.getElementById('responseMessage').innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function closeEscrow() {
+            
+            document.getElementById('responseMessage').innerHTML = "Close account request sent." ;
+            document.getElementById('responseMessage').style.color = "red" ;
+            document.getElementById('closeButton').disabled = true; 
+
+            var closeOption = document.getElementById('closeOption').value;
+            var boolVar = 0;
+            if (closeOption=="paySeller") {
+                boolVar = 1;
+            }
+            console.log(`Closing escrow with option: ${closeOption} --> `+boolVar);
+            
+            try {
+                const contractWithSigner = myContract.connect(signer);
+                const tx = await contractWithSigner.closeEscrow(boolVar);
+                const receipt = await tx.wait();
+                console.log(`Transaction successful with hash: ${receipt.transactionHash}`);
+                document.getElementById('responseMessage').innerHTML = "Escrow account closed." ;
+                document.getElementById('responseMessage').style.color = "blue" ;
+            } catch (error) {
+                console.error("Error calling escrowClose():", error);
+                document.getElementById('responseMessage').innerHTML = `Error: ${error.message}`;
+            }
+        }
+    </script>
+
+</body>
+</html>
