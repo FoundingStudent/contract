@@ -39,7 +39,7 @@
         }
 
         button {
-            background-color: #0d0e14; /* Dark navy for incomplete tasks */
+            background-color: #2563eb;
             color: white;
             border: none;
             cursor: pointer;
@@ -47,20 +47,12 @@
         }
 
         button:hover:not([disabled]) {
-            background-color: #232532; /* Slightly lighter for hover effect */
+            background-color: #1d4ed8;
         }
 
         button:disabled {
             background-color: #9ca3af;
             cursor: not-allowed;
-        }
-
-        button.complete {
-            background-color: #ab8943; /* Gold for completed tasks */
-        }
-
-        button.complete:hover:not([disabled]) {
-            background-color: #967639; /* Slightly darker gold on hover */
         }
 
         .section {
@@ -142,6 +134,7 @@
             <button id="closeButton" onclick="closeEscrow()">Close Escrow</button>
         </div>
     </div>
+
     <!-- Your existing JavaScript logic remains untouched -->
     <script>
         var myWallet, myContract, provider, signer;
