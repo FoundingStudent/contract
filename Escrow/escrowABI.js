@@ -1,6 +1,6 @@
 
 // Set this address to the escrow contract you deployed in Remix.
-const escrowContractAddress = '0x49e6f37e66aFD3F831c310964Ca54ebDDA14E984';
+const escrowContractAddress = '0x55DBba008c82A4db465ec45BDee7E99D54CEabcA';
 
 // Set this address to the token you want to send to the escrow contract.
 const escrowTokenAddress = "0x54BfBee118d5a6833B25B8309f895A6B1df0d12a";
