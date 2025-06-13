@@ -197,7 +197,7 @@
             response.innerHTML = "<b>Approval in progress...</b>";
             response.className = "status-message error";
 
-            approveAmt = BigInt(getAmt * 10 ** 18);
+            approveAmt = BigInt(getAmt * 10 ** 6);
             const tokenContract = new ethers.Contract(escrowTokenAddress, escrowTokenABI, signer);
 
             try {
@@ -233,7 +233,7 @@
                 return;
             }
 
-            const wholeNumAmount = BigInt(amount * 10 ** 18);
+            const wholeNumAmount = BigInt(amount * 10 ** 6);
 
             try {
                 const contractWithSigner = myContract.connect(signer);
