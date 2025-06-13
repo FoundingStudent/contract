@@ -4,9 +4,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract MyEscrow {
 
-    // Replace this address with the token you created (or whatever token you want to use).
     address constant tokenToEscrow = 0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359 ;
-    // This tells the contract that the address you provided is a token that can be transferred.
     IERC20 escrowToken = IERC20(tokenToEscrow); 
     address public buyerAddress = address(0);
     address public sellerAddress = address(0);
@@ -21,12 +19,10 @@ contract MyEscrow {
 
         require(buyerAddress==address(0), "This account is already being used.");
 
-        // Record the escrow information.
         buyerAddress = msg.sender;
         sellerAddress = escrowSeller;
         mediatorAddress = escrowMediator;
         amountToEscrow = escrowAmount;
-        // Transfer to funds from the buyer to this contract.
         escrowToken.transferFrom(msg.sender, address(this), amountToEscrow);
     }
 
@@ -36,13 +32,10 @@ contract MyEscrow {
 
         escrowToken.approve(address(this), amountToEscrow);
         if (paySeller==1) {
-            // Pay the seller (transfer funds from this contract to seller wallet).
             escrowToken.transferFrom(address(this), sellerAddress, amountToEscrow);
         } else {
-            // Return funds to the buyer (transfer funds from this contract to buyer wallet).
             escrowToken.transferFrom(address(this), payable(buyerAddress), amountToEscrow);
         }
-        // Reset the variables so that the contract can be used again.
         buyerAddress = address(0);
         sellerAddress = address(0);
         mediatorAddress = address(0);
